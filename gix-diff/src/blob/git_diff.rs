@@ -124,7 +124,7 @@ fn get_indent(s: &[u8]) -> Option<u8> {
 fn measure_and_score_change<T: AsRef<[u8]>>(lines: &[Token], split: usize, interner: &Interner<T>, score: &mut Score) {
     // Gather information about the surroundings of the change
     let end_of_file = split >= lines.len();
-    let mut indent: Option<u8> = if split >= lines.len() {
+    let mut indent: Option<u8> = if end_of_file {
         None
     } else {
         get_indent(interner[lines[split]].as_ref())
@@ -136,22 +136,24 @@ fn measure_and_score_change<T: AsRef<[u8]>>(lines: &[Token], split: usize, inter
 
     for line in (0..=split.saturating_sub(1)).rev() {
         pre_indent = get_indent(interner[lines[line]].as_ref());
-        if pre_indent.is_none() {
-            pre_blank += 1;
-            if pre_blank == MAX_BLANKS {
-                pre_indent = Some(0);
-                break;
-            }
+        if pre_indent.is_some() {
+            break;
+        }
+        pre_blank += 1;
+        if pre_blank == MAX_BLANKS {
+            pre_indent = Some(0);
+            break;
         }
     }
     for line in split + 1..lines.len() {
         post_indent = get_indent(interner[lines[line]].as_ref());
-        if post_indent.is_none() {
-            post_blank += 1;
-            if post_blank == MAX_BLANKS {
-                post_indent = Some(0);
-                break;
-            }
+        if post_indent.is_some() {
+            break;
+        }
+        post_blank += 1;
+        if post_blank == MAX_BLANKS {
+            post_indent = Some(0);
+            break;
         }
     }
 
